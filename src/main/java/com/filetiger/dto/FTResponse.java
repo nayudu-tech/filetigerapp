@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.filetiger.model.Categories;
 import com.filetiger.model.DocumentTypes;
 import com.filetiger.model.Documents;
+import com.filetiger.model.FTFolder;
 import com.filetiger.model.FillingCabinet;
 import com.filetiger.model.Group;
 import com.filetiger.model.User;
@@ -34,6 +35,8 @@ public class FTResponse implements Serializable{
 	private String email;
 	private List<Group> groups;
 	private Group group;
+	private List<FTFolder> ftFolders;
+	private FTFolder ftFolder;
 	
 	public User getUser() {
 		return user;
@@ -136,5 +139,17 @@ public class FTResponse implements Serializable{
 	}
 	public void setUsers(List<User> users) {
 		this.users = users;
+	}
+	public List<FTFolder> getFtFolders() {
+		return ftFolders;
+	}
+	public void setFtFolders(List<FTFolder> ftFolders) {
+		this.ftFolders = ftFolders;
+	}
+	public FTFolder getFtFolder() {
+		return ftFolder;
+	}
+	public void setFtFolder(FTFolder ftFolder) {
+		this.ftFolder = ftFolder;
 	}
 }

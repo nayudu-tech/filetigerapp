@@ -35,6 +35,25 @@ public class FTRequest {
 	private String cabinetName;
 	private String cabinetLocation;
 	private GroupRequest groupRequest;
+	private FolderRequest folderRequest;
+	
+	public static class FolderRequest{
+		private String folderName;
+		private String fileCabinetId;
+		
+		public String getFolderName() {
+			return folderName;
+		}
+		public void setFolderName(String folderName) {
+			this.folderName = folderName;
+		}
+		public String getFileCabinetId() {
+			return fileCabinetId;
+		}
+		public void setFileCabinetId(String fileCabinetId) {
+			this.fileCabinetId = fileCabinetId;
+		}
+	}
 	
 	public static class GroupRequest{
 		private String groupName;
@@ -376,5 +395,11 @@ public class FTRequest {
 	}
 	public void setGroupRequest(GroupRequest groupRequest) {
 		this.groupRequest = groupRequest;
+	}
+	public FolderRequest getFolderRequest() {
+		return folderRequest;
+	}
+	public void setFolderRequest(FolderRequest folderRequest) {
+		this.folderRequest = folderRequest;
 	}
 }

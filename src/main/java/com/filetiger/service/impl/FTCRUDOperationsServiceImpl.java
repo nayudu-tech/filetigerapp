@@ -26,6 +26,7 @@ import com.filetiger.model.DocToFile;
 import com.filetiger.model.DocToFileIdentity;
 import com.filetiger.model.DocumentTypes;
 import com.filetiger.model.Documents;
+import com.filetiger.model.FTFolder;
 import com.filetiger.model.FillingCabinet;
 import com.filetiger.model.Group;
 import com.filetiger.model.User;
@@ -34,6 +35,7 @@ import com.filetiger.repository.DocToCategoryRepository;
 import com.filetiger.repository.DocToFileRepository;
 import com.filetiger.repository.DocumentTypesRepository;
 import com.filetiger.repository.DocumentsRepository;
+import com.filetiger.repository.FTFolderRepository;
 import com.filetiger.repository.FilesRepository;
 import com.filetiger.repository.FillingCabinetRepository;
 import com.filetiger.repository.GroupRepository;
@@ -62,6 +64,8 @@ public class FTCRUDOperationsServiceImpl implements FTCRUDOperationsService{
 	private FillingCabinetRepository fillingCabinetRepository;
 	@Autowired
 	private GroupRepository groupRepository;
+	@Autowired
+	private FTFolderRepository ftFolderRepository;
 	@Autowired
 	private PasswordEncoder bcryptEncoder;
 	private static final Logger logger = LoggerFactory.getLogger(FTCRUDOperationsServiceImpl.class);
@@ -99,6 +103,9 @@ public class FTCRUDOperationsServiceImpl implements FTCRUDOperationsService{
 			case "User":
 				ftResponse = usersCRUDOperations(ftRequest, operationType, ftResponse);
 				break;
+			case "Folder":
+				ftResponse = folderCRUDOperations(ftRequest, operationType, ftResponse);
+				break;
 			default:
 				logger.debug("Invalid module name");
 				return Utility.getInstance().failureResponse(ftRequest, ftResponse, Utility.getInstance().readProperty("crud.operations.failed.msg2"));
@@ -111,6 +118,83 @@ public class FTCRUDOperationsServiceImpl implements FTCRUDOperationsService{
 		return ftResponse;
 	}
 	
+	private FTResponse folderCRUDOperations(FTRequest ftRequest, String operationType, FTResponse ftResponse) {
+		logger.info("method folderCRUDOperations starts");
+		if(!operationType.equals("")) {
+			if(operationType.equals("FindAll")) {
+				List<FTFolder> ftFolders = ftFolderRepository.findAll();
+				if(!ftFolders.isEmpty()) {
+					logger.info("Successfully fetched all users");
+					ftResponse.setFtFolders(ftFolders);
+					return Utility.getInstance().successResponse(new FTRequest(), ftResponse, Utility.getInstance().readProperty("transaction.success.msg"));
+				}else {
+					logger.debug("Failed to fetch users");
+					return Utility.getInstance().failureResponse(new FTRequest(), ftResponse, Utility.getInstance().readProperty("document.type.failed.msg"));
+				}
+			}else if(operationType.equals("Save")) {
+				FTFolder ftFolder = settingFolder(ftRequest, new FTFolder());
+				if(ftFolder != null) {
+					logger.info("Folder saved successfully ");
+					return Utility.getInstance().successResponse(ftRequest, ftResponse, Utility.getInstance().readProperty("folder.success.msg"));
+				}else {
+					logger.debug("Failed to store Folder, please try again ");
+					return Utility.getInstance().failureResponse(ftRequest, ftResponse, Utility.getInstance().readProperty("folder.failed.msg"));
+				}
+			}else if(operationType.equals("Update")) {
+				if(ftRequest.getId() != null && !ftRequest.getId().isEmpty()) {
+					FTFolder ftFolderById = ftFolderRepository.findOne(Integer.parseInt(ftRequest.getId()));
+					if(ftFolderById != null) {
+						FTFolder updateFTFolder = settingFolder(ftRequest, ftFolderById);
+						if(updateFTFolder != null) {
+							logger.info("Folder updated successfully ");
+							return Utility.getInstance().successResponse(ftRequest, ftResponse, Utility.getInstance().readProperty("folder.success.msg"));
+						}else {
+							logger.debug("Failed to store folder, please try again ");
+							return Utility.getInstance().failureResponse(ftRequest, ftResponse, Utility.getInstance().readProperty("folder.failed.msg"));
+						}
+					}else {
+						logger.debug("Failed to fetch data by id");
+						return Utility.getInstance().failureResponse(new FTRequest(), ftResponse, Utility.getInstance().readProperty("document.type.failed.msg"));
+					}
+				}else {
+					logger.debug("Folder id is mandatory");
+					return Utility.getInstance().failureResponse(new FTRequest(), ftResponse, Utility.getInstance().readProperty("id.failed.msg"));
+				}
+			}else if(operationType.equals("FindById")) {
+				if(ftRequest.getId() != null && !ftRequest.getId().isEmpty()) {
+					FTFolder ftFolderById = ftFolderRepository.findOne(Integer.parseInt(ftRequest.getId()));
+					if(ftFolderById != null) {
+						ftResponse.setFtFolder(ftFolderById);
+						logger.info("Successfully loaded folder by id");
+						return Utility.getInstance().successResponse(new FTRequest(), ftResponse, Utility.getInstance().readProperty("transaction.success.msg"));
+					}else {
+						logger.debug("Failed to fetch data by id");
+						return Utility.getInstance().failureResponse(new FTRequest(), ftResponse, Utility.getInstance().readProperty("document.type.failed.msg"));
+					}
+				}else {
+					logger.debug("Folder id is mandatory");
+					return Utility.getInstance().failureResponse(new FTRequest(), ftResponse, Utility.getInstance().readProperty("id.failed.msg"));
+				}
+			}else if(operationType.equals("Delete")) {
+				if(ftRequest.getId() != null && !ftRequest.getId().isEmpty()) {
+					ftFolderRepository.delete(Integer.parseInt(ftRequest.getId()));
+					logger.info("Successfully Deleted Folder");
+					return Utility.getInstance().successResponse(new FTRequest(), ftResponse, Utility.getInstance().readProperty("transaction.success.msg"));
+				}else {
+					logger.debug("Failed to delete folder");
+					return Utility.getInstance().failureResponse(new FTRequest(), ftResponse, Utility.getInstance().readProperty("id.failed.msg"));
+				}
+			}else {
+				logger.debug("Invalid Operation Type");
+				return Utility.getInstance().failureResponse(ftRequest, ftResponse, Utility.getInstance().readProperty("crud.operations.failed.msg1"));
+			}
+		}else {
+			logger.debug("Operation Type is mandatory");
+			return Utility.getInstance().failureResponse(ftRequest, ftResponse, Utility.getInstance().readProperty("crud.operations.failed.msg"));
+		}
+	}
+
+
 	private FTResponse usersCRUDOperations(FTRequest ftRequest, String operationType, FTResponse ftResponse) {
 		logger.info("method usersCRUDOperations starts");
 		if(!operationType.equals("")) {
@@ -782,5 +866,23 @@ public class FTCRUDOperationsServiceImpl implements FTCRUDOperationsService{
 		
 		User savedUser = userRepository.save(user);
 		return savedUser;
+	}
+	
+
+	private FTFolder settingFolder(FTRequest ftRequest, FTFolder ftFolder) {
+		if(ftRequest.getFolderRequest().getFolderName() != null && !ftRequest.getFolderRequest().getFolderName().isEmpty())
+			ftFolder.setFolderName(ftRequest.getFolderRequest().getFolderName());
+		if(ftRequest.getFolderRequest().getFileCabinetId() != null)
+			ftFolder.setFileCabinetId(Integer.parseInt(ftRequest.getFolderRequest().getFileCabinetId()));
+		ftFolder.setCompleted(Short.parseShort("0"));
+		
+		if((ftRequest.getOperationType() != null && !ftRequest.getOperationType().isEmpty()) && ftRequest.getOperationType().equalsIgnoreCase("Update")) {
+			if(ftRequest.getId() != null && !ftRequest.getId().isEmpty())
+				ftFolder.setId(Integer.parseInt(ftRequest.getId()));
+		}
+		
+		FTFolder savedFolder = ftFolderRepository.save(ftFolder);
+		
+		return savedFolder;
 	}
 }
